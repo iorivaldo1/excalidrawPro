@@ -1,0 +1,35 @@
+name: 部署 excalidrawPro 到 Ubuntu
+
+on:
+  push:
+    branches:
+      - main
+      - master # 兼容旧版默认分支
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 安装依赖与打包
+        run: |
+          npm install
+          npm run build
+
+      - name: 部署到 Ubuntu 服务器
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          ARGS: "-avz --delete"
+          SOURCE: "excalidrawPro/"
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: "/etc/nginx/html/excalidrawPro"
