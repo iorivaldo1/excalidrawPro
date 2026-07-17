@@ -108,8 +108,3 @@ code {
   background: var(--code-bg);
 }
 
-/* 隐藏 Excalidraw 的所有浮动 UI（包括左上角菜单和左下角缩放控制） */
-.excalidraw .layer-ui__wrapper {
-  display: none !important;
-}
-

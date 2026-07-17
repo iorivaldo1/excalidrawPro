@@ -1,8 +1,6 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
-import PostgresRTree from './pages/PostgresRTree'
-import QgisQuadTree from './pages/QgisQuadTree'
-import GeoserverQuadTree from './pages/GeoserverQuadTree'
+import DynamicBoard from './pages/DynamicBoard'
 import './App.css'
 
 function App() {
@@ -14,9 +12,9 @@ function App() {
           <Route index element={<Navigate to="/postgres-rtree" replace />} />
           
           {/* 子路由 */}
-          <Route path="postgres-rtree" element={<PostgresRTree />} />
-          <Route path="qgis-quadtree" element={<QgisQuadTree />} />
-          <Route path="geoserver-quadtree" element={<GeoserverQuadTree />} />
+          <Route path="postgres-rtree" element={<DynamicBoard />} />
+          <Route path="qgis-quadtree" element={<DynamicBoard />} />
+          <Route path="geoserver-quadtree" element={<DynamicBoard />} />
         </Route>
       </Routes>
     </HashRouter>
