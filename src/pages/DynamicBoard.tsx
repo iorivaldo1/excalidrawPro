@@ -119,6 +119,11 @@ export default function DynamicBoard() {
       return;
     }
 
+    const pwd = window.prompt('请输入保存密码：');
+    if (pwd !== 'aa00aa') {
+      return;
+    }
+
     setIsUploading(true);
 
     try {
@@ -143,7 +148,7 @@ export default function DynamicBoard() {
 
       const resJson = await res.json();
       if (resJson.code === 200) {
-        alert('保存成功！');
+        alert('保存成功');
         setHasChanged(false); // 保存成功后隐藏保存按钮
       } else {
         alert(`保存失败: ${resJson.msg || '未知错误'}`);
