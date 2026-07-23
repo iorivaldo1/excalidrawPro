@@ -15,6 +15,7 @@ function App() {
           <Route path="postgres-rtree" element={<DynamicBoard />} />
           <Route path="qgis-quadtree" element={<DynamicBoard />} />
           <Route path="geoserver-quadtree" element={<DynamicBoard />} />
+          <Route path="esri-kdtree" element={<DynamicBoard />} />
         </Route>
       </Routes>
     </HashRouter>

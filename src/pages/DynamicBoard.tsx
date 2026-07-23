@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
@@ -23,33 +23,38 @@ export default function DynamicBoard() {
 
   const location = useLocation()
 
+  // 辅助函数：从数据库拉取当前分类的画板列表
+  const fetchBoardList = useCallback(async (targetType: string, autoSelectBoardName?: string) => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
+    const listUrl = `${baseUrl}/get_geo_pg/excalidraw/listByType?type=${targetType}`
+
+    try {
+      const res = await fetch(listUrl);
+      const resJson = await res.json();
+      if (resJson.code === 200 && resJson.data && resJson.data.length > 0) {
+        setBoards(resJson.data);
+        if (autoSelectBoardName) {
+          setActiveFile(autoSelectBoardName);
+        } else {
+          setActiveFile(resJson.data[0].boardName);
+        }
+      } else {
+        setBoards([]);
+        setActiveFile('default_blank_board');
+      }
+    } catch (err) {
+      console.error('拉取画板列表失败:', err);
+      setBoards([]);
+      setActiveFile('default_blank_board');
+    }
+  }, []);
+
   // 1. 初始化时，从数据库拉取当前路由类别下的所有画板
   useEffect(() => {
-    // 提取当前路由名称作为分类（去掉开头的 /）
     const currentType = location.pathname.replace(/^\//, '') || 'postgres-rtree';
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
-    const listUrl = `${baseUrl}/get_geo_pg/excalidraw/listByType?type=${currentType}`
-    
-    // 切换左侧导航栏时，先清空选中的文件，以确保画布刷新并重新拉取新分类的默认第一个文件
     setActiveFile('');
-
-    fetch(listUrl)
-      .then((res) => res.json())
-      .then((resJson) => {
-        if (resJson.code === 200 && resJson.data && resJson.data.length > 0) {
-          setBoards(resJson.data);
-          // 选中第一个
-          setActiveFile(resJson.data[0].boardName);
-        } else {
-          setBoards([]);
-          // 如果数据库里这个类别没有画板，给一个默认的空画板
-          setActiveFile('default_blank_board');
-        }
-      })
-      .catch((err) => {
-        console.error('拉取画板列表失败:', err);
-      });
-  }, [location.pathname]); // 当路由变化时重新拉取
+    fetchBoardList(currentType);
+  }, [location.pathname, fetchBoardList]);
 
   // 2. 当选中的 activeFile 改变时，从数据库拉取具体画板的数据
   useEffect(() => {
@@ -93,7 +98,6 @@ export default function DynamicBoard() {
           isInitialLoadRef.current = true;
           setHasChanged(false);
           prevElementsRef.current = elements;
-          // 由于去掉了 appState 的覆盖，这里记录一个默认空字符串，如果发生背景变色，后续也能被 onChange 捕获
           prevBgColorRef.current = '';
         } else {
           setInitialData({ elements: [], appState: {}, files: {} });
@@ -109,18 +113,23 @@ export default function DynamicBoard() {
 
   // 保存数据到服务器
   const handleSave = async () => {
-    if (!activeFile || activeFile === 'default_blank_board') {
-      alert('当前无法保存默认空画板，请先创建或选择有效画板');
-      return;
-    }
-
     if (!boardDataRef.current) {
       alert('没有需要保存的数据');
       return;
     }
 
+    let saveBoardName = activeFile;
+    if (!saveBoardName || saveBoardName === 'default_blank_board') {
+      const inputName = window.prompt('请输入画板名称：');
+      if (!inputName || !inputName.trim()) {
+        return;
+      }
+      saveBoardName = inputName.trim();
+    }
+
     const pwd = window.prompt('请输入保存密码：');
     if (pwd !== 'aa00aa') {
+      alert('密码错误');
       return;
     }
 
@@ -131,7 +140,7 @@ export default function DynamicBoard() {
       const currentType = location.pathname.replace(/^\//, '') || 'postgres-rtree';
       
       const payload = {
-        boardName: activeFile,
+        boardName: saveBoardName,
         dataStructuresType: currentType,
         elements: JSON.stringify(boardDataRef.current.elements || []),
         appState: JSON.stringify(boardDataRef.current.appState || {}),
@@ -147,11 +156,13 @@ export default function DynamicBoard() {
       });
 
       const resJson = await res.json();
-      if (resJson.code === 200) {
+      if (resJson.code === 200 || resJson.success || resJson.message === 'success' || resJson.data === true) {
         alert('保存成功');
-        setHasChanged(false); // 保存成功后隐藏保存按钮
+        setHasChanged(false);
+        // 刷新画板列表并自动选中当前画板
+        fetchBoardList(currentType, saveBoardName);
       } else {
-        alert(`保存失败: ${resJson.msg || '未知错误'}`);
+        alert(`保存失败: ${resJson.msg || resJson.message || '未知错误'}`);
       }
     } catch (err) {
       console.error('保存报错:', err);
@@ -173,11 +184,11 @@ export default function DynamicBoard() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
           {boards.length > 0 ? (
             boards.map((board) => (
               <button 
-                key={board.id}
+                key={board.id || board.boardName}
                 onClick={() => setActiveFile(board.boardName)}
                 style={{
                   padding: '8px 16px',
@@ -201,26 +212,25 @@ export default function DynamicBoard() {
         </div>
 
         {/* 保存按钮 */}
-        {hasChanged && (
-          <div>
-            <button 
-              onClick={handleSave}
-              disabled={isUploading || activeFile === 'default_blank_board'}
-              style={{
-                padding: '8px 24px',
-                backgroundColor: (isUploading || activeFile === 'default_blank_board') ? '#9ca3af' : '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: (isUploading || activeFile === 'default_blank_board') ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              {isUploading ? '保存中...' : '保存修改'}
-            </button>
-          </div>
-        )}
+        <div>
+          <button 
+            onClick={handleSave}
+            disabled={isUploading}
+            style={{
+              padding: '8px 24px',
+              backgroundColor: isUploading ? '#9ca3af' : hasChanged ? '#10b981' : '#059669',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: isUploading ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.2s ease-in-out',
+              boxShadow: hasChanged ? '0 0 8px rgba(16, 185, 129, 0.5)' : 'none'
+            }}
+          >
+            {isUploading ? '保存中...' : '保存修改'}
+          </button>
+        </div>
       </div>
 
       {/* 画布容器 */}
@@ -261,3 +271,4 @@ export default function DynamicBoard() {
     </div>
   )
 }
+
