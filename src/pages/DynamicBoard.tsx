@@ -15,7 +15,7 @@ export default function DynamicBoard() {
   const [activeFile, setActiveFile] = useState<string>('')
   // 画板初始数据
   const [initialData, setInitialData] = useState<any>(null)
-  
+
   // 引用，用于保存最新的画板数据，避免每次改变都引起组件重绘
   const boardDataRef = useRef<any>(null)
   // 用于防重复提交的状态
@@ -70,7 +70,7 @@ export default function DynamicBoard() {
         setActiveFile('default_blank_board');
       }
     } catch (err) {
-      console.error('拉取画板列表失败:', err);
+      console.error('拉取画板列表失败?:', err);
       setBoards([]);
       setActiveFile('default_blank_board');
     }
@@ -90,11 +90,11 @@ export default function DynamicBoard() {
     // 清空画布显示 Loading
     setInitialData(null)
     boardDataRef.current = null
-    
+
     if (activeFile === 'default_blank_board') {
-      const initial = { 
-        elements: [], 
-        files: {} 
+      const initial = {
+        elements: [],
+        files: {}
       };
       setInitialData(initial);
       boardDataRef.current = initial;
@@ -107,7 +107,7 @@ export default function DynamicBoard() {
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
     const url = `${baseUrl}/get_geo_pg/excalidraw/getByBoardName?boardName=${activeFile}`
-    
+
     fetch(url)
       .then((res) => res.json())
       .then((resJson) => {
@@ -116,12 +116,12 @@ export default function DynamicBoard() {
           // parse 还原对象
           const elements = dbData.elements ? JSON.parse(dbData.elements) : [];
           const files = dbData.files ? JSON.parse(dbData.files) : {};
-          
+
           // 完全不传入后端的 appState，强制 Excalidraw 使用全新的默认视图状态
           const initial: any = { elements, files };
           setInitialData(initial);
           boardDataRef.current = initial;
-          
+
           isInitialLoadRef.current = true;
           setHasChanged(false);
           prevElementsRef.current = elements;
@@ -177,7 +177,7 @@ export default function DynamicBoard() {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
       // 根据动态匹配的 currentType 提交保存
       const currentType = getCurrentType();
-      
+
       const payload = {
         boardName: saveBoardName,
         dataStructuresType: currentType,
@@ -214,10 +214,10 @@ export default function DynamicBoard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
       {/* 动态顶部标签切换栏 */}
-      <div style={{ 
-        display: 'flex', 
-        padding: '12px 24px', 
-        background: '#f8f9fa', 
+      <div style={{
+        display: 'flex',
+        padding: '12px 24px',
+        background: '#f8f9fa',
         borderBottom: '1px solid #e5e7eb',
         zIndex: 100,
         alignItems: 'center',
@@ -226,7 +226,7 @@ export default function DynamicBoard() {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1, alignItems: 'center' }}>
           {boards.length > 0 ? (
             boards.map((board) => (
-              <button 
+              <button
                 key={board.id || board.boardName}
                 onClick={() => setActiveFile(board.boardName)}
                 style={{
@@ -269,7 +269,7 @@ export default function DynamicBoard() {
 
         {/* 保存按钮 */}
         <div>
-          <button 
+          <button
             onClick={handleSave}
             disabled={isUploading}
             style={{
@@ -293,12 +293,12 @@ export default function DynamicBoard() {
       <div style={{ flex: 1, position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
           {initialData ? (
-            <Excalidraw 
-              key={activeFile} 
-              initialData={initialData} 
+            <Excalidraw
+              key={activeFile}
+              initialData={initialData}
               onChange={(elements, appState, files) => {
                 boardDataRef.current = { elements, appState, files }
-                
+
                 if (isInitialLoadRef.current) {
                   isInitialLoadRef.current = false;
                   prevElementsRef.current = elements;
@@ -308,7 +308,7 @@ export default function DynamicBoard() {
 
                 // 判断是否是真正的修改：元素发生变化，或者画布背景色发生变化
                 if (
-                  elements !== prevElementsRef.current || 
+                  elements !== prevElementsRef.current ||
                   appState.viewBackgroundColor !== prevBgColorRef.current
                 ) {
                   prevElementsRef.current = elements;
