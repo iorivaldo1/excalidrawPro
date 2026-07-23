@@ -3,6 +3,27 @@ import { useLocation } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 
+// 根据路由路径固化 data_structure_type
+const getTypeByPathname = (pathname: string): string => {
+  const path = pathname.replace(/^\//, '').toLowerCase();
+  switch (path) {
+    case 'postgres-rtree':
+    case 'postgres_rtree':
+      return 'postgres-rtree';
+    case 'qgis-quadtree':
+    case 'qgis_quadtree':
+      return 'qgis_quadtree';
+    case 'geoserver-quadtree':
+    case 'geoserver_quadtree':
+      return 'geoserver_quadtree';
+    case 'esri-kdtree':
+    case 'esri_kdtree':
+      return 'esri_kdtree';
+    default:
+      return path || 'postgres-rtree';
+  }
+};
+
 export default function DynamicBoard() {
   // 动态画板列表
   const [boards, setBoards] = useState<any[]>([])
@@ -49,9 +70,9 @@ export default function DynamicBoard() {
     }
   }, []);
 
-  // 1. 初始化时，从数据库拉取当前路由类别下的所有画板
+  // 1. 初始化时，根据当前路由自动匹配固化的分类 type 并从数据库拉取
   useEffect(() => {
-    const currentType = location.pathname.replace(/^\//, '') || 'postgres-rtree';
+    const currentType = getTypeByPathname(location.pathname);
     setActiveFile('');
     fetchBoardList(currentType);
   }, [location.pathname, fetchBoardList]);
@@ -111,6 +132,11 @@ export default function DynamicBoard() {
       })
   }, [activeFile])
 
+  // 新建画板
+  const handleCreateNew = () => {
+    setActiveFile('default_blank_board');
+  };
+
   // 保存数据到服务器
   const handleSave = async () => {
     if (!boardDataRef.current) {
@@ -137,7 +163,8 @@ export default function DynamicBoard() {
 
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const currentType = location.pathname.replace(/^\//, '') || 'postgres-rtree';
+      // 根据固化的路由类型映射自动获取 currentType，不询问用户
+      const currentType = getTypeByPathname(location.pathname);
       
       const payload = {
         boardName: saveBoardName,
@@ -209,6 +236,23 @@ export default function DynamicBoard() {
               当前分类下暂无上传的画板数据
             </div>
           )}
+
+          {/* 新建画板按钮 */}
+          <button
+            onClick={handleCreateNew}
+            style={{
+              padding: '8px 14px',
+              border: '1px dashed #4f46e5',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              backgroundColor: activeFile === 'default_blank_board' ? '#e0e7ff' : 'transparent',
+              color: '#4f46e5',
+              fontWeight: 'bold',
+              fontSize: '0.875rem'
+            }}
+          >
+            + 新建画板
+          </button>
         </div>
 
         {/* 保存按钮 */}
@@ -271,4 +315,5 @@ export default function DynamicBoard() {
     </div>
   )
 }
+
 
