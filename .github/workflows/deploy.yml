@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master # 兼容旧版默认分支
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
