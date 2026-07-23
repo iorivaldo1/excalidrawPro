@@ -12,13 +12,13 @@ const getTypeByPathname = (pathname: string): string => {
       return 'postgres-rtree';
     case 'qgis-quadtree':
     case 'qgis_quadtree':
-      return 'qgis_quadtree';
+      return 'qgis-quadtree';
     case 'geoserver-quadtree':
     case 'geoserver_quadtree':
-      return 'geoserver_quadtree';
+      return 'geoserver-quadtree';
     case 'esri-kdtree':
     case 'esri_kdtree':
-      return 'esri_kdtree';
+      return 'esri-kdtree';
     default:
       return path || 'postgres-rtree';
   }
