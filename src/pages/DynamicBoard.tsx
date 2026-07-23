@@ -1,28 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useOutletContext } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
+import type { NavItem } from '../components/Layout'
 
-// 根据路由路径固化 data_structure_type
-const getTypeByPathname = (pathname: string): string => {
-  const path = pathname.replace(/^\//, '').toLowerCase();
-  switch (path) {
-    case 'postgres-rtree':
-    case 'postgres_rtree':
-      return 'postgres-rtree';
-    case 'qgis-quadtree':
-    case 'qgis_quadtree':
-      return 'qgis-quadtree';
-    case 'geoserver-quadtree':
-    case 'geoserver_quadtree':
-      return 'geoserver-quadtree';
-    case 'esri-kdtree':
-    case 'esri_kdtree':
-      return 'esri-kdtree';
-    default:
-      return path || 'postgres-rtree';
-  }
-};
+interface OutletContextType {
+  navItems?: NavItem[];
+}
 
 export default function DynamicBoard() {
   // 动态画板列表
@@ -43,6 +27,27 @@ export default function DynamicBoard() {
   const prevBgColorRef = useRef<string>('')
 
   const location = useLocation()
+  const { navItems } = (useOutletContext<OutletContextType>() || {})
+
+  // 动态获取当前路由对应的 dataStructuresType
+  const getCurrentType = useCallback((): string => {
+    const rawPath = location.pathname;
+    const normalizedPath = rawPath.startsWith('/') ? rawPath : '/' + rawPath;
+
+    if (navItems && navItems.length > 0) {
+      const found = navItems.find((item) => {
+        const itemPath = item.path.startsWith('/') ? item.path : '/' + item.path;
+        return itemPath.toLowerCase() === normalizedPath.toLowerCase();
+      });
+      if (found && found.dataStructuresType) {
+        return found.dataStructuresType;
+      }
+    }
+
+    // 回退处理
+    const cleanPath = normalizedPath.replace(/^\//, '').toLowerCase();
+    return cleanPath || 'postgres-rtree';
+  }, [location.pathname, navItems]);
 
   // 辅助函数：从数据库拉取当前分类的画板列表
   const fetchBoardList = useCallback(async (targetType: string, autoSelectBoardName?: string) => {
@@ -70,12 +75,12 @@ export default function DynamicBoard() {
     }
   }, []);
 
-  // 1. 初始化时，根据当前路由自动匹配固化的分类 type 并从数据库拉取
+  // 1. 初始化或路由/导航变化时，自动匹配分类 type 并拉取画板列表
   useEffect(() => {
-    const currentType = getTypeByPathname(location.pathname);
+    const currentType = getCurrentType();
     setActiveFile('');
     fetchBoardList(currentType);
-  }, [location.pathname, fetchBoardList]);
+  }, [getCurrentType, fetchBoardList]);
 
   // 2. 当选中的 activeFile 改变时，从数据库拉取具体画板的数据
   useEffect(() => {
@@ -111,7 +116,7 @@ export default function DynamicBoard() {
           const elements = dbData.elements ? JSON.parse(dbData.elements) : [];
           const files = dbData.files ? JSON.parse(dbData.files) : {};
           
-          // 完全不传入后端的 appState，强制 Excalidraw 使用全新的默认视图状态（这样工具栏一定会按默认展示）
+          // 完全不传入后端的 appState，强制 Excalidraw 使用全新的默认视图状态
           const initial: any = { elements, files };
           setInitialData(initial);
           boardDataRef.current = initial;
@@ -163,8 +168,8 @@ export default function DynamicBoard() {
 
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      // 根据固化的路由类型映射自动获取 currentType，不询问用户
-      const currentType = getTypeByPathname(location.pathname);
+      // 根据动态匹配的 currentType 提交保存
+      const currentType = getCurrentType();
       
       const payload = {
         boardName: saveBoardName,
@@ -233,7 +238,7 @@ export default function DynamicBoard() {
             ))
           ) : (
             <div style={{ color: '#6b7280', fontSize: '0.9rem', padding: '8px 0' }}>
-              当前分类下暂无上传的画板数据
+              当前分类 [{getCurrentType()}] 下暂无画板数据
             </div>
           )}
 
@@ -315,5 +320,3 @@ export default function DynamicBoard() {
     </div>
   )
 }
-
-
