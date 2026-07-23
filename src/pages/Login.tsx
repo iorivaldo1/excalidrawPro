@@ -36,6 +36,7 @@ export default function Login() {
       if (result.code === 200 && result.data && result.data.token) {
         localStorage.setItem('excalidraw_token', result.data.token);
         localStorage.setItem('excalidraw_user', result.data.userName || username);
+        localStorage.setItem('excalidraw_role', result.data.role || 'admin');
         navigate('/admin');
       } else {
         setErrorMsg(result.msg || result.message || '用户名或密码错误');

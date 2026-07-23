@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useLocation, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import { Excalidraw } from '@excalidraw/excalidraw'
 import '@excalidraw/excalidraw/index.css'
 import type { NavItem } from '../components/Layout'
@@ -27,6 +27,7 @@ export default function DynamicBoard() {
   const prevBgColorRef = useRef<string>('')
 
   const location = useLocation()
+  const navigate = useNavigate()
   const { navItems } = (useOutletContext<OutletContextType>() || {})
 
   // 动态获取当前路由对应的 dataStructuresType
@@ -158,9 +159,15 @@ export default function DynamicBoard() {
       saveBoardName = inputName.trim();
     }
 
-    const pwd = window.prompt('请输入保存密码：');
-    if (pwd !== 'aa00aa') {
-      alert('密码错误');
+    // 检查是否已以 admin 身份登录
+    const token = localStorage.getItem('excalidraw_token');
+    const role = localStorage.getItem('excalidraw_role');
+
+    if (!token || (role && role !== 'admin')) {
+      const goLogin = window.confirm('当前未检测到管理员登录状态，保存画板修改需要管理员权限。是否立即前往登录管理账号？');
+      if (goLogin) {
+        navigate('/login');
+      }
       return;
     }
 
