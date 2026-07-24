@@ -39,7 +39,11 @@ export default function Admin() {
     setLoading(true);
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-      const res = await fetch(`${baseUrl}/get_geo_pg/excalidraw/nav/list`);
+      const token = sessionStorage.getItem('excalidraw_token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${baseUrl}/get_geo_pg/excalidraw/nav/list`, { headers });
       const json = await res.json();
       if (json.code === 200 && json.data) {
         setNavList(json.data);
@@ -106,11 +110,15 @@ export default function Admin() {
       const url = `${baseUrl}/get_geo_pg/excalidraw/nav/${isEdit ? 'update' : 'add'}`;
       const method = isEdit ? 'PUT' : 'POST';
 
+      const token = sessionStorage.getItem('excalidraw_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 
@@ -137,8 +145,13 @@ export default function Admin() {
 
     try {
       const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      const token = sessionStorage.getItem('excalidraw_token');
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${baseUrl}/get_geo_pg/excalidraw/nav/delete/${id}`, {
         method: 'DELETE',
+        headers,
       });
       const resJson = await res.json();
       if (resJson.code === 200 || resJson.data === true) {

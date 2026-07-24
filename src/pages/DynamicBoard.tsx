@@ -186,11 +186,16 @@ export default function DynamicBoard() {
         files: JSON.stringify(boardDataRef.current.files || {})
       };
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${baseUrl}/get_geo_pg/excalidraw/upload`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify(payload)
       });
 
