@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:8080'
 
   return {
-    base: '/algorithm-board/',
+    base: '/',
     build: {
       outDir: 'excalidrawPro',
     },
