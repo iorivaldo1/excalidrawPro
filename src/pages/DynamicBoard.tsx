@@ -160,8 +160,8 @@ export default function DynamicBoard() {
     }
 
     // 检查是否已以 admin 身份登录
-    const token = localStorage.getItem('excalidraw_token');
-    const role = localStorage.getItem('excalidraw_role');
+    const token = sessionStorage.getItem('excalidraw_token');
+    const role = sessionStorage.getItem('excalidraw_role');
 
     if (!token || (role && role !== 'admin')) {
       const goLogin = window.confirm('当前未检测到管理员登录状态，保存画板修改需要管理员权限。是否立即前往登录管理账号？');

@@ -24,11 +24,11 @@ export default function Admin() {
   });
 
   const navigate = useNavigate();
-  const userName = localStorage.getItem('excalidraw_user') || '管理员';
+  const userName = sessionStorage.getItem('excalidraw_user') || '管理员';
 
   // 检查登录状态
   useEffect(() => {
-    const token = localStorage.getItem('excalidraw_token');
+    const token = sessionStorage.getItem('excalidraw_token');
     if (!token) {
       navigate('/login');
     }
@@ -57,8 +57,8 @@ export default function Admin() {
 
   // 处理退出登录
   const handleLogout = () => {
-    localStorage.removeItem('excalidraw_token');
-    localStorage.removeItem('excalidraw_user');
+    sessionStorage.removeItem('excalidraw_token');
+    sessionStorage.removeItem('excalidraw_user');
     navigate('/login');
   };
 

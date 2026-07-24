@@ -34,9 +34,9 @@ export default function Login() {
 
       const result = await response.json();
       if (result.code === 200 && result.data && result.data.token) {
-        localStorage.setItem('excalidraw_token', result.data.token);
-        localStorage.setItem('excalidraw_user', result.data.userName || username);
-        localStorage.setItem('excalidraw_role', result.data.role || 'admin');
+        sessionStorage.setItem('excalidraw_token', result.data.token);
+        sessionStorage.setItem('excalidraw_user', result.data.userName || username);
+        sessionStorage.setItem('excalidraw_role', result.data.role || 'admin');
         navigate('/admin');
       } else {
         setErrorMsg(result.msg || result.message || '用户名或密码错误');
